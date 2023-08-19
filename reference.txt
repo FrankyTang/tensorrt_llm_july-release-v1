@@ -1,0 +1,1 @@
+[要求] https://github.com/NVIDIA/trt-samples-for-hackathon-cn/blob/master/Hackathon2023/HackathonGuide.md
