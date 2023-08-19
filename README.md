@@ -1,250 +1,76 @@
-# TensorRT-LLM: A TensorRT toolbox for Large Language Models
+### 总述
 
-## Table of Contents
+请简练地概括项目的主要贡献，使读者可以快速理解并复现你的工作，包括：
 
-- [The TensorRT-LLM Overview](#the-tensorrt-llm-overview)
-- [Installation](#installation)
-- [Examples](#examples)
-- [Troubleshooting](#troubleshooting)
-- [Release notes](#release-notes)
-  - [Changelog](#changelog)
-  - [Known issues](#known-issues)
+- 介绍本工作是 [NVIDIA TensorRT Hackathon 2023](https://github.com/NVIDIA/trt-samples-for-hackathon-cn/tree/master/Hackathon2023) 的参赛题目（请给出上述链接），并介绍具体选题是什么（参见“选题得分”小节，应为如下之一：1，2，3，4，2+4，3+4）
+    - 如果是优化新模型，原始模型的名称及链接，并对该模型做个简要介绍
+- 优化效果（例如给出精度和加速比），简单给出关键的数字即可，在这里不必详细展开
+- 在Docker里面代码编译、运行步骤的完整说明
+  - 请做到只要逐行运行你给的命令，就能把代码跑起来
 
-## The TensorRT-LLM Overview
+### 主要开发工作
 
-TensorRT-LLM provides users with an easy-to-use Python API to define Large
-Language Models (LLMs) and build
-[TensorRT](https://developer.nvidia.com/tensorrt) engines that contain
-state-of-the-art optimizations to perform inference efficiently on NVIDIA GPUs.
-TensorRT-LLM also contains components to create Python and C++ runtimes that
-execute those TensorRT engines. It also includes a backend for integration with
-the [NVIDIA Triton Inference
-Server](https://developer.nvidia.com/nvidia-triton-inference-server).  Models
-built with TensorRT-LLM can be executed on a wide range of configurations going
-from a single GPU to multiple nodes with multiple GPUs (using Tensor
-Parallelism).
+#### 开发工作的难点
 
-The Python API of TensorRT-LLM is architectured to look similar to the
-[PyTorch](https://pytorch.org) API. It provides users with a
-[functional](./tensorrt_llm/functional.py) module containing functions like
-`einsum`, `softmax`, `matmul` or `view`. The [layer](./tensorrt_llm/layer)
-module bundles useful building blocks to assemble LLMs; like an `Attention`
-block, a `MLP` or the entire `Transformer` layer. Model-specific components,
-like `GPTAttention` or `BertAttention`, can be found in the
-[model](./tensorrt_llm/model) module.
+请在这一节里总结你的工作难点与亮点。
+- 如果使用 TensorRT 进行优化，请介绍一下在模型在导出时、或用polygraphy/trtexec解析时，或在使用TensorRT中，遇到了什么问题并解决了。换句话说，针对这个模型，我们为什么需要额外的工程手段。
+- 如果使用 TensorRT-LLM 进行优化，描述以下方面可供选手参考：如果搭建了新模型， 请介绍模型结构有无特别之处，在模型的搭建过程中使用了什么算子，有没有通过plugin支持的新算子。如果支持新feature，请介绍这个feature具体需要修改哪些模块才能实现。如果优化已有模型，请介绍模型性能瓶颈以及解决方法。另外还可以包含工程实现以及debug过程中的难点。
 
-TensorRT-LLM provides users with predefined models that can easily be modified
-and extended. The current version of TensorRT-LLM supports
-[BERT](https://huggingface.co/docs/transformers/model_doc/bert),
-[GPT](https://huggingface.co/docs/transformers/model_doc/openai-gpt),
-[NVIDIA GPT-2B](https://huggingface.co/nvidia/GPT-2B-001),
-[GPT-J](https://huggingface.co/docs/transformers/model_doc/gptj),
-[LLaMA](https://huggingface.co/docs/transformers/model_doc/llama),
-[OPT](https://huggingface.co/docs/transformers/model_doc/opt),
-[SantaCoder](https://huggingface.co/bigcode/santacoder)
-and
-[StarCoder](https://huggingface.co/bigcode/starcoder).
-To maximize performance and reduce memory footprint, TensorRT-LLM allows the
-models to be executed using different quantization modes (see
-[`examples/gpt`](./examples/gpt) for concrete examples).  TensorRT-LLM supports
-INT4 or INT8 weights (and FP16 activations; a.k.a.  INT4/INT8 weight-only) as
-well as a complete implementation of the
-[SmoothQuant](https://arxiv.org/abs/2211.10438) technique.
+### 开发与优化过程
 
-For a more detailed presentation of the software architecture and the key
-concepts used in TensorRT-LLM, we recommend you to read the following
-[document](./docs/architecture.md).
+这一部分是报告的主体。请把自己假定为老师，为 TensorRT 或 TensorRT-LLM 的初学者讲述如何从原始模型出发，经过一系列开发步骤，得到优化后的 TensorRT 或 TensorRT-LLM 模型。或者你是如何一步步通过修改哪些模块添加了新feature的。
 
-## Installation
+建议：
 
-### Docker Container
+- 分步骤讲清楚开发过程
+- 最好能介绍为什么需要某个特别步骤，通过这个特别步骤解决了什么问题
+  - 比如，通过Nsight Systems绘制timeline做了性能分析，发现attention时间占比高且有优化空间（贴图展示分析过程），所以决定要写plugin。然后介绍plugin的设计与实现，并在timeline上显示attention这一部分的性能改进。
 
-We recommend that you use a [Docker](https://www.docker.com) container to build
-and run TensorRT-LLM. Instructions to install an environment to run Docker
-containers for the NVIDIA platform can be found
-[here](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html).
+### 优化效果
 
-To create a Docker container to build and run TensorRT-LLM, you need to
-download the following packages from NVOnline:
+这一部分介绍你的工作在云主机上的运行效果。如果是优化模型，需要分两部分说明：
 
- * `polygraphy-0.48.1-py2.py3-none-any.whl`,
- * `TensorRT-9.0.0.2.Linux.x86_64-gnu.cuda-12.2.tar.gz`.
+- 精度：报告与原始模型进行精度对比测试的结果，验证精度达标。
+  - 如果选用TensorRT-LLM，请跑summarize任务并使用 [Rouge](https://huggingface.co/spaces/evaluate-metric/rouge) 来对比模型优化前后的精度差距。如果精度良好，原始模型与优化模型的Rouge score的差异一般在1以内。例子见 TensorRT-LLM docker 中 /root/workspace/tensorrt_llm_july-release-v1/examples/gpt/summarize.py
+  - 如果选用TensorRT，这里的精度测试指的是针对“原始模型”和“TensorRT优化模型”分别输出的数据（tensor）进行数值比较。请给出绝对误差和相对误差的统计结果（至少包括最大值、平均值与中位数）。
+    - 使用训练好的权重和有意义的输入数据更有说服力。如果选手使用了随机权重和输入数据，请在这里注明。
+    - 在精度损失较大的情况下，鼓励选手用训练好的权重和测试数据集对模型优化前与优化后的准确度指标做全面比较，以增强说服力。
+- 性能：例如可以用图表展示不同batch size或sequence length下性能加速效果（考虑到可能模型可能比较大，可以只给batch size为1的数据）
+  - 一般用原始模型作为baseline
+  - 一般提供模型推理时间的加速比即可；若能提供压力测试下的吞吐提升则更好。
 
-Copy those packages to the top-level directory of TensorRT-LLM. Then, use the
-following command:
+请注意：
 
-```bash
-DOCKER_BUILDKIT=1 docker build -t tensorrt_llm -f docker/Dockerfile.dev .
-```
+- 相关测试代码也需要包含在代码仓库中，可被复现。
+- 请写明云主机的软件硬件环境，方便他人参考。
 
-To run the container, use the following command:
+### Bug报告（可选）
 
-```bash
-docker run --gpus all --rm -it -v ${PWD}:/code/tensorrt_llm -w /code/tensorrt_llm tensorrt_llm bash
-```
+提交bug是对TensorRT/TensorRT-LLM的另一种贡献。发现的TensorRT/TensorRT-LLM或cookbook、或文档和教程相关bug，请提交到[github issues](https://github.com/NVIDIA/trt-samples-for-hackathon-cn/issues)，并请在这里给出链接。  
 
-### Build from Source
+对于每个bug，请标记上hackathon2023标签，并写好正文：
 
-Make sure you have fetched all the dependencies before compiling TensorRT-LLM:
+- 对于cookbook或文档和教程相关bug，说清楚问题即可，不必很详细。
+- 对于TensorRT bug，首先确认在云主机上使用NGC docker + TensorRT 9.0.0.1可复现。
+- 然后填写如下模板，并请导师复核确认（前面“评分标准”已经提到，确认有效可得附加分）：
+  - Environment
+    - TensorRT 9.0.0.1
+    - Versions of CUDA, CUBLAS, CuDNN used
+    - Container used
+    - NVIDIA driver version
+  - Reproduction Steps
+    - Provide detailed reproduction steps for the issue here, including any commands run on the command line.
+  - Expected Behavior
+    - Provide a brief summary of the expected behavior of the software. Provide output files or examples if possible.
+  - Actual Behavior
+    - Describe the actual behavior of the software and how it deviates from the expected behavior. Provide output files or examples if possible.
+  - Additional Notes
+    - Provide any additional context here you think might be useful for the TensorRT team to help debug this issue (such as experiments done, potential things to investigate).
 
-```bash
-git submodule update --init --recursive
-```
+### 送分题答案（可选）
 
-Once it is done, you can build the code from inside that container using:
+如果你做了送分题，请把答案写在这里。
 
-```bash
-# To build the TensorRT-LLM code.
-./scripts/build_wheel.py --trt_root /usr/local/TensorRT-9.0.0.2
+### 经验与体会（可选）
 
-# Deploy TensorRT-LLM in your environment.
-pip install ./build/tensorrt_llm*.whl
-```
-
-By default, `build_wheel.py` enables incremental builds. To clean the build
-directory, add the `--clean` option:
-
-```bash
-./scripts/build_wheel.py --clean --trt_root /usr/local/TensorRT-9.0.0.2
-
-```
-
-### Building for Specific CUDA Architectures
-
-Specific CUDA architectures may be passed as an argument to
-[`build_wheel.py`](scripts/build_wheel.py). The script accepts a single
-argument taking a semicolon separated list of CUDA architecture specifications
-compatible with [CUDA_ARCHITECTURES in CMake].  For instance, to build for
-compute capabilities 8.0 and 8.6, call `build_wheel.py` like so:
-
-```bash
-./scripts/build_wheel.py --cuda_architectures "80-real;86-real" --trt_root /usr/local/TensorRT-9.0.0.2
-```
-
-### Building and Linking against the C++ Runtime of TensorRT-LLM
-
-Running `build_wheel.py` will also compile the library containing the C++
-runtime of TensorRT-LLM. If Python support and `torch` modules are not
-required, the script provides the option `--cpp_only` which restricts the build
-to the C++ runtime only:
-
-```bash
-./scripts/build_wheel.py --cuda_architectures "80-real;86-real" --cpp_only --clean --trt_root /usr/local/TensorRT-9.0.0.2
-```
-
-This is particularly useful to avoid linking problems which may be introduced
-by particular versions of `torch` related to the [dual ABI support of
-GCC](https://gcc.gnu.org/onlinedocs/libstdc++/manual/using_dual_abi.html). The
-option `--clean` will remove the build directory before building. The default
-build directory is `cpp/build`, which may be overridden using the option
-`--build_dir`. Run `build_wheel.py --help` for an overview of all supported
-options.
-
-Clients may choose to link against the shared or the static version of the
-library. These libraries can be found in the following locations:
-
-```bash
-cpp/build/tensorrt_llm/libtensorrt_llm.so
-cpp/build/tensorrt_llm/libtensorrt_llm_static.a
-```
-
-In addition, one needs to link against the library containing the LLM plugins
-for TensorRT available here:
-
-```bash
-cpp/build/tensorrt_llm/plugins/libnvinfer_plugin.so
-```
-
-Add the following directories to your project include paths
-
-```bash
-cpp
-cpp/include
-```
-
-Only header files contained in `cpp/include` are part of the supported API and
-may be directly included. Other headers contained under `cpp` should not be
-included directly since they might change in future versions.
-
-For examples of how to use the C++ runtime, see the unit tests in
-[gptSessionTest.cpp](cpp/tests/runtime/gptSessionTest.cpp) and the related
-[CMakeLists.txt](cpp/tests/CMakeLists.txt) file.
-
-## Examples
-
-- [Bert](examples/bert)
-- [BLOOM](examples/bloom)
-- [ChatGLM-6B](examples/chatglm6b)
-- [GPT](examples/gpt)
-- [GPT-J](examples/gptj)
-- [GPT-NeoX](examples/gptneox)
-- [LLaMA](examples/llama)
-- [OpenAI Triton](examples/openai_triton)
-- [OPT](examples/opt)
-
-## Troubleshooting
-
-- It's recommended to add options `–shm-size=1g –ulimit memlock=-1` to the
-  docker or nvidia-docker run command.  Otherwise you may see NCCL errors when
-  running multiple GPU inferences, see
-  https://docs.nvidia.com/deeplearning/nccl/user-guide/docs/troubleshooting.html#errors
-  for details.
-
-- If you encounter
-```text
-NVIDIA H100 PCIe with CUDA capability sm_90 is not compatible with the current PyTorch installation. The current PyTorch install supports CUDA capabilities sm_37 sm_50 sm_60 sm_70 sm_75 sm_80 sm_86.
-```
-
-when building engines, you need to install the preview version of PyTorch that
-corresponds to your CUDA version.  As an example, for CUDA 12.1, use:
-
-```bash
-pip3 install --pre torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/cu121
-```
-
-[CUDA_ARCHITECTURES in CMake]: https://cmake.org/cmake/help/latest/prop_tgt/CUDA_ARCHITECTURES.html#prop_tgt:CUDA_ARCHITECTURES
-
-## Release notes
-
-### Changelog
-
-**July 2023**
-
-  - TensorRT-LLM requires TensorRT 9.0,
-  - Support for BLOOM, ChatGLM 6B, GPT-NeoX, LLaMA v2,
-  - Support for BF16 and FP8 models,
-  - Support for in-flight batching,
-  - Support for a new C++ Triton Backend,
-  - Refactoring of the KV cache to support pagging,
-    - The KV cache is now decomposed into blocks,
-    - The layout of the K cache has changed to `[batch_size, num_heads, seq_length, dim_per_head]`,
-  - Support for multi-GPU embeddings,
-  - Support for embedding sharing (input embedding and LM head),
-  - New example that shows how to integrate an OpenAI Triton kernel into TensorRT-LLM,
-  - Improved documentation (Docstrings in `functional.py` and documentation in `docs`)
-
-**June 2023**
-
-  - Support Nemo-GPT Next, SantaCoder, StarCoder in FP16,
-  - Support for a new C++ Runtime (with streaming support),
-  - Support for beam-search,
-  - Support for Multiquery Attention (MQA),
-  - Support for RoPE,
-  - Support for INT8 KV Cache,
-  - Support INT4 weight-only (with GPT example), but the weight-only kernels will not be optimal on hopper
-
-**May 2023**
-
-  - **The initial release of TensorRT-LLM**
-  - Support GPT, BERT, OPT, LLaMA in FP16,
-  - Support single-node multi-GPU GPT, OPT, BERT, LLaMA FP16 using Tensor parallelism,
-  - Support Triton Inference Server with a Python backend,
-  - Support sampling features, including top-k, top-p, temperature, and sampling penalty,
-  - Attention support
-   - Optimized Flash-Attention-based Multihead Attention for Ampere, Ada and Hopper architectures,
-   - Multi-Query Attention (MQA),
-   - ALiBi in Multihead-Attention,
-  - Support SmoothQuant INT8 (with GPT example),
-  - Support INT8 weight-only (with GPT example), but the weight-only kernels will not be optimal on hopper
-
-### Known issues
+欢迎在这里总结经验，抒发感慨。
