@@ -2,3 +2,5 @@ build
 cpp/build
 tensorrt_llm/libs
 *.egg-info
+*__pycache__*
+.vscode

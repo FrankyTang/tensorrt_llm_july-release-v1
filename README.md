@@ -69,7 +69,12 @@
 
 ### 送分题答案（可选）
 
-如果你做了送分题，请把答案写在这里。
+1. examples/gpt/README 的命令行“
+python3 run.py --max_output_len=8”的运行结果如下：
+![](docs/gpt_run_result.png)
+2. examples/gpt/README 的命令行“
+python3 summarize.py --engine_dirtrt_engine/gpt2/fp16/1-gpu --test_hf --batch_size1 --test_trt_llm --hf_model_location=gpt2 --check_accuracy --tensorrt_llm_rouge1_threshold=14”的运行结果如下：
+![](docs/gpt_summarization.png)
 
 ### 经验与体会（可选）
 
