@@ -1,24 +1,41 @@
 ### 总述
 
-请简练地概括项目的主要贡献，使读者可以快速理解并复现你的工作，包括：
+本工作是 [NVIDIA TensorRT Hackathon 2023](https://github.com/NVIDIA/trt-samples-for-hackathon-cn/tree/master/Hackathon2023) 的参赛题目，具体的规则和相关的选题请查看如上链接。
 
-- 介绍本工作是 [NVIDIA TensorRT Hackathon 2023](https://github.com/NVIDIA/trt-samples-for-hackathon-cn/tree/master/Hackathon2023) 的参赛题目（请给出上述链接），并介绍具体选题是什么（参见“选题得分”小节，应为如下之一：1，2，3，4，2+4，3+4）
-    - 如果是优化新模型，原始模型的名称及链接，并对该模型做个简要介绍
-- 优化效果（例如给出精度和加速比），简单给出关键的数字即可，在这里不必详细展开
-- 在Docker里面代码编译、运行步骤的完整说明
-  - 请做到只要逐行运行你给的命令，就能把代码跑起来
+关于选题方面，我组选择的是
+
+**题2.用TensorRT-LLM实现新模型**。新模型为自动驾驶行业的端到端大模型[UniAD](https://github.com/OpenDriveLab/UniAD)
+
+**题4.为TensorRT-LLM添加新feature，或者在模型上启用了现有feature**。将现有的SmoothQuant在模型上启用
+ 
+
+[TODO 补充]优化效果（例如给出精度和加速比），简单给出关键的数字即可，在这里不必详细展开 
+
 
 ### 主要开发工作
 
 #### 开发工作的难点
 
-请在这一节里总结你的工作难点与亮点。
+[TODO 删除]请在这一节里总结你的工作难点与亮点。
 - 如果使用 TensorRT 进行优化，请介绍一下在模型在导出时、或用polygraphy/trtexec解析时，或在使用TensorRT中，遇到了什么问题并解决了。换句话说，针对这个模型，我们为什么需要额外的工程手段。
 - 如果使用 TensorRT-LLM 进行优化，描述以下方面可供选手参考：如果搭建了新模型， 请介绍模型结构有无特别之处，在模型的搭建过程中使用了什么算子，有没有通过plugin支持的新算子。如果支持新feature，请介绍这个feature具体需要修改哪些模块才能实现。如果优化已有模型，请介绍模型性能瓶颈以及解决方法。另外还可以包含工程实现以及debug过程中的难点。
 
 ### 开发与优化过程
 
-这一部分是报告的主体。请把自己假定为老师，为 TensorRT 或 TensorRT-LLM 的初学者讲述如何从原始模型出发，经过一系列开发步骤，得到优化后的 TensorRT 或 TensorRT-LLM 模型。或者你是如何一步步通过修改哪些模块添加了新feature的。
+- [ ] 添加高效的plugin
+- [ ] Nsight system 分析和优化
+- [ ] 完成SmoothQuant的启用
+- [ ] 完成模型的总结，见summarize.py
+- [ ] 完成模型的推理，见run.py
+- [ ] 完成模型的构建，见builder.py
+- [ ] 完成手撕模型结构，见model.py
+- [ ] 完成pth分层保存weight,见pytoch_convert.py 
+- [ ] 基于A10显卡完成baseline的输出(精度和时延)
+- [x] 需要分工的UniAD框架的搭建
+- [x] 代码初始化
+
+
+[TODO 删除]这一部分是报告的主体。请把自己假定为老师，为 TensorRT 或 TensorRT-LLM 的初学者讲述如何从原始模型出发，经过一系列开发步骤，得到优化后的 TensorRT 或 TensorRT-LLM 模型。或者你是如何一步步通过修改哪些模块添加了新feature的。
 
 建议：
 
@@ -28,7 +45,7 @@
 
 ### 优化效果
 
-这一部分介绍你的工作在云主机上的运行效果。如果是优化模型，需要分两部分说明：
+[TODO 删除]这一部分介绍你的工作在云主机上的运行效果。如果是优化模型，需要分两部分说明：
 
 - 精度：报告与原始模型进行精度对比测试的结果，验证精度达标。
   - 如果选用TensorRT-LLM，请跑summarize任务并使用 [Rouge](https://huggingface.co/spaces/evaluate-metric/rouge) 来对比模型优化前后的精度差距。如果精度良好，原始模型与优化模型的Rouge score的差异一般在1以内。例子见 TensorRT-LLM docker 中 /root/workspace/tensorrt_llm_july-release-v1/examples/gpt/summarize.py
