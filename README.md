@@ -29,7 +29,7 @@
 - [ ] 完成模型的推理，见run.py
 - [ ] 完成模型的构建，见builder.py
 - [ ] 完成手撕模型结构，见model.py
-- [ ] 完成pth分层保存weight,见pytoch_convert.py 
+- [x] 完成pth分层保存weight,见pytoch_convert.py 
 - [ ] 基于A10显卡完成baseline的输出(精度和时延)
 - [x] 需要分工的UniAD框架的搭建
 - [x] 代码初始化
