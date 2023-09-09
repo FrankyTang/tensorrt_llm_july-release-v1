@@ -4,12 +4,20 @@
 
 关于选题方面，我组选择的是
 
-**题2.用TensorRT-LLM实现新模型**。新模型为自动驾驶行业的端到端大模型[UniAD](https://github.com/OpenDriveLab/UniAD)
+* 题2.用TensorRT-LLM实现新模型。新模型为自动驾驶行业的端到端大模型[UniAD](https://github.com/OpenDriveLab/UniAD)
 
-**题4.为TensorRT-LLM添加新feature，或者在模型上启用了现有feature**。将现有的SmoothQuant在模型上启用
+* 题4.为TensorRT-LLM添加新feature，或者在模型上启用了现有feature。将现有的SmoothQuant在模型上启用
  
-
 [TODO 补充]优化效果（例如给出精度和加速比），简单给出关键的数字即可，在这里不必详细展开 
+
+使用步骤
+``` bash
+# step 1: 下载模型文件
+mkdir example/uniad/ckpt && cd example/unid/ckpt && wget https://github.com/OpenDriveLab/UniAD/releases/download/v1.0.1/uniad_base_e2e.pth
+
+# step 2: pth 分层保存
+cd ../ && python pytorch_convert.py -i ckpt/uniad_base_e2e.pth -o ckpt/c-model
+```
 
 
 ### 主要开发工作
